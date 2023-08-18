@@ -19,10 +19,27 @@ extension ViewController: UIGestureRecognizerDelegate {
     /// Displays the `VirtualObjectSelectionViewController` from the `addObjectButton` or in response to a tap gesture in the `sceneView`.
     @IBAction func showVirtualObjectSelectionViewController() {
         // Ensure adding objects is an available action and we are not loading another object (to avoid concurrent modifications of the scene).
-        guard !addObjectButton.isHidden && !virtualObjectLoader.isLoading else { return }
+        guard !virtualObjectLoader.isLoading else { return }
         
         statusViewController.cancelScheduledMessage(for: .contentPlacement)
-        performSegue(withIdentifier: SegueIdentifier.showObjects.rawValue, sender: addObjectButton)
+        
+        let object = VirtualObject.availableObjects.first!
+        virtualObjectLoader.loadVirtualObject(object, loadedHandler: { [unowned self] loadedObject in
+
+            do {
+                let scene = try SCNScene(url: object.referenceURL, options: nil)
+                self.sceneView.prepare([scene], completionHandler: { _ in
+                    DispatchQueue.main.async {
+                        self.hideObjectLoadingUI()
+                        self.placeVirtualObject(loadedObject)
+                    }
+                })
+            } catch {
+                fatalError("Failed to load SCNScene from object.referenceURL")
+            }
+
+        })
+        displayObjectLoadingUI()
     }
     
     /// Determines if the tap gesture for presenting the `VirtualObjectSelectionViewController` should be used.
@@ -42,8 +59,6 @@ extension ViewController: UIGestureRecognizerDelegate {
         statusViewController.cancelAllScheduledMessages()
 
         virtualObjectLoader.removeAllVirtualObjects()
-        addObjectButton.setImage(#imageLiteral(resourceName: "add"), for: [])
-        addObjectButton.setImage(#imageLiteral(resourceName: "addPressed"), for: [.highlighted])
 
         resetTracking()
 

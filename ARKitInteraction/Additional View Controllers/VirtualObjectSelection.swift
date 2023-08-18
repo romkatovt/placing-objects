@@ -49,7 +49,7 @@ class VirtualObjectSelectionViewController: UITableViewController {
     
     weak var sceneView: ARSCNView?
 
-    private var lastObjectAvailabilityUpdateTimestamp: TimeInterval?
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -61,46 +61,7 @@ class VirtualObjectSelectionViewController: UITableViewController {
         preferredContentSize = CGSize(width: 250, height: tableView.contentSize.height)
     }
     
-    func updateObjectAvailability() {
-        guard let sceneView = sceneView else { return }
-        
-        // Update object availability only if the last update was at least half a second ago.
-        if let lastUpdateTimestamp = lastObjectAvailabilityUpdateTimestamp,
-            let timestamp = sceneView.session.currentFrame?.timestamp,
-            timestamp - lastUpdateTimestamp < 0.5 {
-            return
-        } else {
-            lastObjectAvailabilityUpdateTimestamp = sceneView.session.currentFrame?.timestamp
-        }
-                
-        var newEnabledVirtualObjectRows = Set<Int>()
-        for (row, object) in VirtualObject.availableObjects.enumerated() {
-            // Enable row always if item is already placed, in order to allow the user to remove it.
-            if selectedVirtualObjectRows.contains(row) {
-                newEnabledVirtualObjectRows.insert(row)
-            }
-            
-            // Enable row if item can be placed at the current location
-            if let query = sceneView.getRaycastQuery(for: object.allowedAlignment),
-                let result = sceneView.castRay(for: query).first {
-                object.mostRecentInitialPlacementResult = result
-                object.raycastQuery = query
-                newEnabledVirtualObjectRows.insert(row)
-            } else {
-                object.mostRecentInitialPlacementResult = nil
-                object.raycastQuery = nil
-            }
-        }
-        
-        // Only reload changed rows
-        let changedRows = newEnabledVirtualObjectRows.symmetricDifference(enabledVirtualObjectRows)
-        enabledVirtualObjectRows = newEnabledVirtualObjectRows
-        let indexPaths = changedRows.map { row in IndexPath(row: row, section: 0) }
-
-        DispatchQueue.main.async {
-            self.tableView.reloadRows(at: indexPaths, with: .automatic)
-        }
-    }
+    
     
     // MARK: - UITableViewDelegate
     

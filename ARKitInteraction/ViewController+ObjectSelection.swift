@@ -91,22 +91,7 @@ extension ViewController: VirtualObjectSelectionViewControllerDelegate {
     // MARK: - VirtualObjectSelectionViewControllerDelegate
     // - Tag: PlaceVirtualContent
     func virtualObjectSelectionViewController(_: VirtualObjectSelectionViewController, didSelectObject object: VirtualObject) {
-        virtualObjectLoader.loadVirtualObject(object, loadedHandler: { [unowned self] loadedObject in
-            
-            do {
-                let scene = try SCNScene(url: object.referenceURL, options: nil)
-                self.sceneView.prepare([scene], completionHandler: { _ in
-                    DispatchQueue.main.async {
-                        self.hideObjectLoadingUI()
-                        self.placeVirtualObject(loadedObject)
-                    }
-                })
-            } catch {
-                fatalError("Failed to load SCNScene from object.referenceURL")
-            }
-            
-        })
-        displayObjectLoadingUI()
+        
     }
     
     func virtualObjectSelectionViewController(_: VirtualObjectSelectionViewController, didDeselectObject object: VirtualObject) {
@@ -126,9 +111,6 @@ extension ViewController: VirtualObjectSelectionViewControllerDelegate {
         // Show progress indicator.
         spinner.startAnimating()
         
-        addObjectButton.setImage(#imageLiteral(resourceName: "buttonring"), for: [])
-
-        addObjectButton.isEnabled = false
         isRestartAvailable = false
     }
 
@@ -136,10 +118,35 @@ extension ViewController: VirtualObjectSelectionViewControllerDelegate {
         // Hide progress indicator.
         spinner.stopAnimating()
 
-        addObjectButton.setImage(#imageLiteral(resourceName: "add"), for: [])
-        addObjectButton.setImage(#imageLiteral(resourceName: "addPressed"), for: [.highlighted])
-
-        addObjectButton.isEnabled = true
         isRestartAvailable = true
+    }
+    
+    func updateObjectAvailability() {
+        guard let sceneView = sceneView else { return }
+        
+        // Update object availability only if the last update was at least half a second ago.
+        if let lastUpdateTimestamp = lastObjectAvailabilityUpdateTimestamp,
+            let timestamp = sceneView.session.currentFrame?.timestamp,
+            timestamp - lastUpdateTimestamp < 0.5 {
+            return
+        } else {
+            lastObjectAvailabilityUpdateTimestamp = sceneView.session.currentFrame?.timestamp
+        }
+                
+        var newEnabledVirtualObjectRows = Set<Int>()
+        for (row, object) in VirtualObject.availableObjects.enumerated() {
+            // Enable row always if item is already placed, in order to allow the user to remove it.
+
+            // Enable row if item can be placed at the current location
+            if let query = sceneView.getRaycastQuery(for: object.allowedAlignment),
+                let result = sceneView.castRay(for: query).first {
+                object.mostRecentInitialPlacementResult = result
+                object.raycastQuery = query
+                newEnabledVirtualObjectRows.insert(row)
+            } else {
+                object.mostRecentInitialPlacementResult = nil
+                object.raycastQuery = nil
+            }
+        }
     }
 }

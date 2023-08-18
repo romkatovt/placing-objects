@@ -14,7 +14,6 @@ class ViewController: UIViewController {
     // MARK: IBOutlets
     
     @IBOutlet var sceneView: VirtualObjectARView!
-    @IBOutlet weak var addObjectButton: UIButton!
     @IBOutlet weak var blurView: UIVisualEffectView!
     @IBOutlet weak var spinner: UIActivityIndicatorView!
     @IBOutlet weak var upperControlsView: UIView!
@@ -46,6 +45,8 @@ class ViewController: UIViewController {
     
     /// A serial queue used to coordinate adding or removing nodes from the scene.
     let updateQueue = DispatchQueue(label: "com.example.apple-samplecode.arkitexample.serialSceneKitQueue")
+    
+    var lastObjectAvailabilityUpdateTimestamp: TimeInterval?
     
     /// Convenience accessor for the session owned by ARSCNView.
     var session: ARSession {
@@ -132,16 +133,12 @@ class ViewController: UIViewController {
                 self.sceneView.scene.rootNode.addChildNode(self.focusSquare)
                 self.focusSquare.state = .detecting(raycastResult: result, camera: camera)
             }
-            if !coachingOverlay.isActive {
-                addObjectButton.isHidden = false
-            }
             statusViewController.cancelScheduledMessage(for: .focusSquare)
         } else {
             updateQueue.async {
                 self.focusSquare.state = .initializing
                 self.sceneView.pointOfView?.addChildNode(self.focusSquare)
             }
-            addObjectButton.isHidden = true
             objectsViewController?.dismiss(animated: false, completion: nil)
         }
     }
