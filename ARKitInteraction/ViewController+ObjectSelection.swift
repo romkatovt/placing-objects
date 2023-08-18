@@ -8,7 +8,7 @@ Methods on the main view controller for handling virtual object loading and move
 import UIKit
 import ARKit
 
-extension ViewController: VirtualObjectSelectionViewControllerDelegate {
+extension ViewController {
     
     /** Adds the specified virtual object to the scene, placed at the world-space position
      estimated by a hit test from the center of the screen.
@@ -16,9 +16,6 @@ extension ViewController: VirtualObjectSelectionViewControllerDelegate {
     func placeVirtualObject(_ virtualObject: VirtualObject) {
         guard focusSquare.state != .initializing, let query = virtualObject.raycastQuery else {
             self.statusViewController.showMessage("CANNOT PLACE OBJECT\nTry moving left or right.")
-            if let controller = self.objectsViewController {
-                self.virtualObjectSelectionViewController(controller, didDeselectObject: virtualObject)
-            }
             return
         }
        
@@ -86,23 +83,6 @@ extension ViewController: VirtualObjectSelectionViewControllerDelegate {
     
     func setTransform(of virtualObject: VirtualObject, with result: ARRaycastResult) {
         virtualObject.simdWorldTransform = result.worldTransform
-    }
-
-    // MARK: - VirtualObjectSelectionViewControllerDelegate
-    // - Tag: PlaceVirtualContent
-    func virtualObjectSelectionViewController(_: VirtualObjectSelectionViewController, didSelectObject object: VirtualObject) {
-        
-    }
-    
-    func virtualObjectSelectionViewController(_: VirtualObjectSelectionViewController, didDeselectObject object: VirtualObject) {
-        guard let objectIndex = virtualObjectLoader.loadedObjects.firstIndex(of: object) else {
-            fatalError("Programmer error: Failed to lookup virtual object in scene.")
-        }
-        virtualObjectLoader.removeVirtualObject(at: objectIndex)
-        virtualObjectInteraction.selectedObject = nil
-        if let anchor = object.anchor {
-            session.remove(anchor: anchor)
-        }
     }
 
     // MARK: Object Loading UI

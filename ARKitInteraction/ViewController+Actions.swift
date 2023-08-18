@@ -32,6 +32,7 @@ extension ViewController: UIGestureRecognizerDelegate {
                     DispatchQueue.main.async {
                         self.hideObjectLoadingUI()
                         self.placeVirtualObject(loadedObject)
+                        self.focusSquare.isHidden = false
                     }
                 })
             } catch {
@@ -61,49 +62,13 @@ extension ViewController: UIGestureRecognizerDelegate {
         virtualObjectLoader.removeAllVirtualObjects()
 
         resetTracking()
+        
+        focusSquare.isHidden = false
 
         // Disable restart for a while in order to give the session time to restart.
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
             self.isRestartAvailable = true
             self.upperControlsView.isHidden = false
         }
-    }
-}
-
-extension ViewController: UIPopoverPresentationControllerDelegate {
-    
-    // MARK: - UIPopoverPresentationControllerDelegate
-
-    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
-        return .none
-    }
-    
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // All menus should be popovers (even on iPhone).
-        if let popoverController = segue.destination.popoverPresentationController, let button = sender as? UIButton {
-            popoverController.delegate = self
-            popoverController.sourceView = button
-            popoverController.sourceRect = button.bounds
-        }
-        
-        guard let identifier = segue.identifier,
-              let segueIdentifer = SegueIdentifier(rawValue: identifier),
-              segueIdentifer == .showObjects else { return }
-        
-        let objectsViewController = segue.destination as! VirtualObjectSelectionViewController
-        objectsViewController.virtualObjects = VirtualObject.availableObjects
-        objectsViewController.delegate = self
-        objectsViewController.sceneView = sceneView
-        self.objectsViewController = objectsViewController
-        
-        // Set all rows of currently placed objects to selected.
-        for object in virtualObjectLoader.loadedObjects {
-            guard let index = VirtualObject.availableObjects.firstIndex(of: object) else { continue }
-            objectsViewController.selectedVirtualObjectRows.insert(index)
-        }
-    }
-    
-    func popoverPresentationControllerDidDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) {
-        objectsViewController = nil
     }
 }

@@ -19,7 +19,6 @@ extension ViewController: ARSCNViewDelegate, ARSessionDelegate {
         
         DispatchQueue.main.async {
             self.updateFocusSquare(isObjectVisible: isAnyObjectInView)
-            
             self.updateObjectAvailability()
         }
     }
@@ -30,7 +29,7 @@ extension ViewController: ARSCNViewDelegate, ARSessionDelegate {
             self.statusViewController.cancelScheduledMessage(for: .planeEstimation)
             self.statusViewController.showMessage("SURFACE DETECTED")
             if self.virtualObjectLoader.loadedObjects.isEmpty {
-                self.statusViewController.scheduleMessage("TAP + TO PLACE AN OBJECT", inSeconds: 7.5, messageType: .contentPlacement)
+                self.showVirtualObjectSelectionViewController()
             }
         }
     }

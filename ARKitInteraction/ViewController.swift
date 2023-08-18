@@ -29,9 +29,6 @@ class ViewController: UIViewController {
         return children.lazy.compactMap({ $0 as? StatusViewController }).first!
     }()
     
-    /// The view controller that displays the virtual object selection menu.
-    var objectsViewController: VirtualObjectSelectionViewController?
-    
     // MARK: - ARKit Configuration Properties
     
     /// A type which manages gesture manipulation of virtual content in the scene.
@@ -120,7 +117,12 @@ class ViewController: UIViewController {
         if isObjectVisible || coachingOverlay.isActive {
             focusSquare.hide()
         } else {
-            focusSquare.unhide()
+            if virtualObjectInteraction.selectedObject == nil {
+                focusSquare.isHidden = false
+                focusSquare.unhide()
+            } else {
+                focusSquare.isHidden = true
+            }
             statusViewController.scheduleMessage("TRY MOVING LEFT OR RIGHT", inSeconds: 5.0, messageType: .focusSquare)
         }
         
@@ -139,7 +141,6 @@ class ViewController: UIViewController {
                 self.focusSquare.state = .initializing
                 self.sceneView.pointOfView?.addChildNode(self.focusSquare)
             }
-            objectsViewController?.dismiss(animated: false, completion: nil)
         }
     }
     

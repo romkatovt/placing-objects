@@ -52,6 +52,7 @@ class FocusSquare: SCNNode {
         }
     }
     
+    
     var state: State = .initializing {
         didSet {
             guard state != oldValue else { return }
@@ -169,6 +170,7 @@ class FocusSquare: SCNNode {
     /// Unhides the focus square.
     func unhide() {
         guard action(forKey: "unhide") == nil else { return }
+        
         
         displayNodeHierarchyOnTop(true)
         runAction(.fadeIn(duration: 0.5), forKey: "unhide")
